@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    env_file:
+      - ./backend/.env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+      start_period: 30s  # Time to wait before starting health checks
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker_backend.Dockerfile
+    container_name: django_backend
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+volumes:
+  pg_data:
